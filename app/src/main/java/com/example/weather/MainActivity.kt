@@ -17,8 +17,6 @@ import android.provider.Settings
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
-import android.widget.TextView
 import android.widget.Toast
 
 class MainActivity : AppCompatActivity(), LocationListener {
@@ -29,14 +27,82 @@ class MainActivity : AppCompatActivity(), LocationListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        if (ContextCompat.checkSelfPermission(this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
+                1000)
+        } else {
+            locationStart()
+
+            if (::locationManager.isInitialized) {
+                locationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER,
+                    1000,
+                    50f,
+                    this)
+            }
+        }
+    }
+
+    private fun locationStart() {
+        Log.d("debug", "locationStart()")
+
+        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            Log.d("debug", "location manager Enabled")
+        } else {
+            val settingsIntent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+            startActivity(settingsIntent)
+            Log.d("debug", "not gpsEnable, startActivity")
+        }
+
+        if (ContextCompat.checkSelfPermission(this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1000)
+            Log.d("debug", "checkSelfPermission false")
+            return
+        }
+
+        locationManager.requestLocationUpdates(
+            LocationManager.GPS_PROVIDER,
+            1000,
+            50f,
+            this)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        if (requestCode == 1000) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d("debug", "checkSelfPermission true")
+
+                locationStart()
+            } else {
+                val toast = Toast.makeText(this,
+                    "can't do anything.", Toast.LENGTH_SHORT)
+                toast.show()
+            }
+        }
+    }
+
+    override fun onLocationChanged(location: Location?) {
         // moshi: JSONパーサー
         val moshi = Moshi.Builder()
             .add(KotlinJsonAdapterFactory())
             .build()
 
-        val apiKey = intent.getStringExtra("apiKey")
+        val params = listOf(
+            "lat" to location?.latitude,
+            "lon" to location?.longitude,
+            "appid" to intent.getStringExtra("apiKey"))
+
         // Fuel: HTTP通信ライブラリ
-        Fuel.get("weather", listOf("appid" to apiKey)).responseString { request, _, result ->
+        Fuel.get("weather", params).responseString { request, _, result ->
             when (result) {
                 is Result.Failure -> {
                     Log.d("Request", request.toString())
@@ -51,5 +117,17 @@ class MainActivity : AppCompatActivity(), LocationListener {
                 }
             }
         }
+    }
+
+    override fun onProviderDisabled(provider: String?) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun onProviderEnabled(provider: String?) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }
