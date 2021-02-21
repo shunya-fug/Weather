@@ -12,6 +12,7 @@ import android.preference.PreferenceManager
 import android.provider.Settings
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
+import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
@@ -124,7 +125,7 @@ class InputApiKeyActivity : AppCompatActivity(), LocationListener {
 
         // Fuel: HTTP通信ライブラリ
         val weatherFields = runBlocking {
-            val (request, _, result) = Fuel.get("weather", params).awaitStringResponseResult()
+            val (_, _, result) = Fuel.get("weather", params).awaitStringResponseResult()
             return@runBlocking result.fold(
                 { data ->
                     return@fold moshi.adapter(WeatherFields::class.java).fromJson(data) },
@@ -134,14 +135,24 @@ class InputApiKeyActivity : AppCompatActivity(), LocationListener {
             )
         }
 
-        val intent = Intent(this, MainActivity::class.java)
-        intent.putExtra("weather", weatherFields!!.weather.first().description)
-        intent.putExtra("cityName", weatherFields!!.name)
-        intent.putExtra("lat", weatherFields!!.coord.lat.toString())
-        intent.putExtra("lon", weatherFields!!.coord.lon.toString())
-        intent.putExtra("temp", weatherFields!!.main.temp.toString() + "℃")
+        if (weatherFields != null) {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.putExtra("weather", weatherFields.weather.first().description)
+            intent.putExtra("cityName", weatherFields.name)
+            intent.putExtra("lat", weatherFields.coord.lat.toString())
+            intent.putExtra("lon", weatherFields.coord.lon.toString())
+            intent.putExtra("temp", weatherFields.main.temp.toString() + "℃")
 
-        startActivity(intent)
+            startActivity(intent)
+        } else {
+            AlertDialog.Builder(this) // FragmentではActivityを取得して生成
+                .setTitle("API-Key is incorrect.")
+                .setMessage("不正な API Key です。")
+                .setPositiveButton("OK") { _, _ ->
+                    // TODO:Yesが押された時の挙動
+                }
+                .show()
+        }
     }
 
     /**
@@ -154,7 +165,7 @@ class InputApiKeyActivity : AppCompatActivity(), LocationListener {
     }
 
     /**
-     * [apiKey] を共有プリファレンスから読み込む。
+     * API Key を共有プリファレンスから読み込む。
      * 読み込めなかったときは `null` を返す。
      */
     private fun loadApiKey(): String? {
