@@ -116,13 +116,12 @@ class InputApiKeyActivity : AppCompatActivity(), LocationListener {
         }
 
         if (weatherFields != null) {
-            val intent = Intent(this, MainActivity::class.java).apply {
-                putExtra("weather", weatherFields.weather.first().description)
-                putExtra("cityName", weatherFields.name)
-                putExtra("lat", weatherFields.coord.lat.toString())
-                putExtra("lon", weatherFields.coord.lon.toString())
-                putExtra("temp", weatherFields.main.temp.toString() + "℃")
-            }
+            val intent = Intent(this, MainActivity::class.java)
+                .putExtra("weather", weatherFields.weather.first().description)
+                .putExtra("cityName", weatherFields.name)
+                .putExtra("lat", weatherFields.coord.lat.toString())
+                .putExtra("lon", weatherFields.coord.lon.toString())
+                .putExtra("temp", weatherFields.main.temp.toString() + "℃")
 
             startActivity(intent)
         } else {

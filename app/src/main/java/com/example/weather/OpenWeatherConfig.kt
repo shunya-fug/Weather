@@ -3,7 +3,7 @@ package com.example.weather
 import android.app.Application
 import com.github.kittinunf.fuel.core.FuelManager
 
-class MyApplication : Application() {
+class OpenWeatherConfig : Application() {
     override fun onCreate() {
         super.onCreate()
 
