@@ -62,4 +62,25 @@
             android:layout_marginBottom="16dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Large" />
 
+    <TextView
+            android:text="latitude"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/latitude"
+            app:layout_constraintTop_toBottomOf="@+id/cityName"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginTop="8dp"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small" />
+
+    <TextView
+            android:text="longitude"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/longitude"
+            app:layout_constraintTop_toBottomOf="@+id/latitude"
+            app:layout_constraintStart_toStartOf="@+id/latitude"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:layout_marginTop="8dp" />
+
 </android.support.constraint.ConstraintLayout>

@@ -7,31 +7,28 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.provider.Settings
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
+import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
 import android.widget.Toast
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.coroutines.awaitStringResponseResult
-import com.github.kittinunf.result.Result
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.android.synthetic.main.activity_input_api_key.*
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.runBlocking
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 class InputApiKeyActivity : AppCompatActivity(), LocationListener {
 
     private lateinit var locationManager: LocationManager
-    private var lat: String? = null
-    private var lon: String? = null
+    private var lat: String = "35.4122"
+    private var lon: String = "139.4130"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -140,6 +137,8 @@ class InputApiKeyActivity : AppCompatActivity(), LocationListener {
         val intent = Intent(this, MainActivity::class.java)
         intent.putExtra("weather", weatherFields!!.weather.first().description)
         intent.putExtra("cityName", weatherFields!!.name)
+        intent.putExtra("lat", weatherFields!!.coord.lat.toString())
+        intent.putExtra("lon", weatherFields!!.coord.lon.toString())
         intent.putExtra("temp", weatherFields!!.main.temp.toString() + "℃")
 
         startActivity(intent)
@@ -165,8 +164,10 @@ class InputApiKeyActivity : AppCompatActivity(), LocationListener {
     }
 
     override fun onLocationChanged(location: Location?) {
-        lat = location?.latitude.toString()
-        lon = location?.longitude.toString()
+        location?.let {
+            lat = it.latitude.toString()
+            lon = it.longitude.toString()
+        }
     }
 
     override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
