@@ -10,10 +10,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        cityName.text = intent.getStringExtra("cityName")
-        latitude.text = "緯度：" + intent.getStringExtra("lat")
-        longitude.text = "経度：" + intent.getStringExtra("lon")
-        weather.text = intent.getStringExtra("weather")
-        temp.text = intent.getStringExtra("temp")
+        intent.run {
+            cityName.text = getStringExtra("cityName")
+            latitude.text = "緯度：" + getStringExtra("lat")
+            longitude.text = "経度：" + getStringExtra("lon")
+            weather.text = getStringExtra("weather")
+            temp.text = getStringExtra("temp")
+        }
     }
 }

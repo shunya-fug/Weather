@@ -28,8 +28,8 @@ import kotlinx.coroutines.runBlocking
 class InputApiKeyActivity : AppCompatActivity(), LocationListener {
 
     private lateinit var locationManager: LocationManager
-    private var lat: String = "35.4122"
-    private var lon: String = "139.4130"
+    private var lat: String = "35.4122" // 緯度（初期値は東京）
+    private var lon: String = "139.4130" // 経度（初期値は東京）
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -105,14 +105,43 @@ class InputApiKeyActivity : AppCompatActivity(), LocationListener {
     }
 
     /**
-     * apiKeySetButton が押された時に MainActivity に遷移する。
-     * このとき apiKeyInput に入力した内容を intent に追加する。
-     * また saveApiKey メソッドで apiKey を共有プリファレンスに保存する。
+     * apiKeySetButton が押された時の挙動を定義。
+     * API Key が正しければ [getWeatherData] メソッドで天気情報を取得し、`MainActivity` に遷移する。
+     * 不正な API Key だった場合はアラートダイアログを表示する。
      */
     private fun onApiKeySetButtonTapped(view: View?) {
-        val apiKey = apiKeyInput.text.toString()
-        saveApiKey(apiKey)
+        val weatherFields = apiKeyInput.text.toString().let { apiKey ->
+            saveApiKey(apiKey)
+            getWeatherData(apiKey)
+        }
 
+        if (weatherFields != null) {
+            val intent = Intent(this, MainActivity::class.java).apply {
+                putExtra("weather", weatherFields.weather.first().description)
+                putExtra("cityName", weatherFields.name)
+                putExtra("lat", weatherFields.coord.lat.toString())
+                putExtra("lon", weatherFields.coord.lon.toString())
+                putExtra("temp", weatherFields.main.temp.toString() + "℃")
+            }
+
+            startActivity(intent)
+        } else {
+            AlertDialog.Builder(this) // FragmentではActivityを取得して生成
+                .setTitle("API-Key is incorrect.")
+                .setMessage("不正な API Key です。")
+                .setPositiveButton("OK") { _, _ ->
+                    // TODO:Yesが押された時の挙動
+                }
+                .show()
+        }
+    }
+
+    /**
+     * 指定した [apiKey] と GPS から取得した [lat], [lon] を利用して
+     * OpenWeatherMap API にアクセスし、天気情報 [WeatherFields] を返却する。
+     * [apiKey] が不正な場合は `null` を返却する。
+     */
+    private fun getWeatherData(apiKey: String): WeatherFields? {
         // moshi: JSONパーサー
         val moshi = Moshi.Builder()
             .add(KotlinJsonAdapterFactory())
@@ -124,7 +153,7 @@ class InputApiKeyActivity : AppCompatActivity(), LocationListener {
             "appid" to apiKey)
 
         // Fuel: HTTP通信ライブラリ
-        val weatherFields = runBlocking {
+        return runBlocking {
             val (_, _, result) = Fuel.get("weather", params).awaitStringResponseResult()
             return@runBlocking result.fold(
                 { data ->
@@ -133,25 +162,6 @@ class InputApiKeyActivity : AppCompatActivity(), LocationListener {
                     error.printStackTrace()
                     return@fold null }
             )
-        }
-
-        if (weatherFields != null) {
-            val intent = Intent(this, MainActivity::class.java)
-            intent.putExtra("weather", weatherFields.weather.first().description)
-            intent.putExtra("cityName", weatherFields.name)
-            intent.putExtra("lat", weatherFields.coord.lat.toString())
-            intent.putExtra("lon", weatherFields.coord.lon.toString())
-            intent.putExtra("temp", weatherFields.main.temp.toString() + "℃")
-
-            startActivity(intent)
-        } else {
-            AlertDialog.Builder(this) // FragmentではActivityを取得して生成
-                .setTitle("API-Key is incorrect.")
-                .setMessage("不正な API Key です。")
-                .setPositiveButton("OK") { _, _ ->
-                    // TODO:Yesが押された時の挙動
-                }
-                .show()
         }
     }
 
@@ -174,10 +184,13 @@ class InputApiKeyActivity : AppCompatActivity(), LocationListener {
         return pref.getString("apiKey", null)
     }
 
+    /**
+     * GPS で現在地を取得し、[location] が `null` でなければ [lat] と [lon] を更新する。
+     */
     override fun onLocationChanged(location: Location?) {
-        location?.let {
-            lat = it.latitude.toString()
-            lon = it.longitude.toString()
+        location?.run {
+            lat = latitude.toString()
+            lon = longitude.toString()
         }
     }
 
