@@ -114,6 +114,8 @@ class MainActivity : AppCompatActivity(), LocationListener {
                     // API からの戻り値は WeatherFields データクラスに格納する
                     val weatherFields = moshi.adapter(WeatherFields::class.java).fromJson(data)
                     weather.text = weatherFields!!.weather.first().description
+                    cityName.text = weatherFields!!.name
+                    temp.text = weatherFields!!.main.temp.toString() + "℃"
                 }
             }
         }
